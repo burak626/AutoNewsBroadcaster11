@@ -1,0 +1,463 @@
+{
+  "name": "AutoNewsBroadcaster11",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/everything",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "n8n"
+            },
+            {
+              "name": "lang",
+              "value": "en"
+            },
+            {
+              "name": "pageSize",
+              "value": "20"
+            },
+            {
+              "name": "sortBy",
+              "value": "publishedAt"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "4f517075af92417293928d57f0fb1a6d"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7bbc5745-46f8-4b2f-a8b3-c0eaef3265e0",
+      "name": "GNews Get",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        208,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://gnews.io/api/v4/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "n8n"
+            },
+            {
+              "name": "lang",
+              "value": "en"
+            },
+            {
+              "name": "apikey",
+              "value": "2d2b35ff7f6952dc983af436eae91707"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fd466264-04ea-442a-9fef-7b92cca4a8c7",
+      "name": "NewsAPI Get",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        208,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "074c2f69-2990-4635-982d-277e6d8c246e",
+              "name": "articles",
+              "value": "={{ $json.articles }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        -96
+      ],
+      "id": "bb5566df-fac3-4f28-aa05-a8e26c813d42",
+      "name": "Articles GNews"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "074c2f69-2990-4635-982d-277e6d8c246e",
+              "name": "articles",
+              "value": "={{ $json.articles }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        96
+      ],
+      "id": "e9037577-5605-40d2-9a7c-9291650db695",
+      "name": "Articles NewsAPI "
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        656,
+        0
+      ],
+      "id": "45189b71-7eb9-4845-ad61-05f69d45e8b6",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        832,
+        160
+      ],
+      "id": "6abb0e98-97a5-4916-a756-76244655710e",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "VoHMb7O55rqzXqOK",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C05V1QKC1MX",
+          "mode": "list",
+          "cachedResultName": "general"
+        },
+        "text": "=##HOT NEWS ABOUT N8N\n\n{{ $json.output }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1200,
+        -144
+      ],
+      "id": "fa568515-019c-4c45-8cf4-52f17aa15d98",
+      "name": "Send a message",
+      "webhookId": "281bbf27-c595-4ad4-82df-be6dea029e70",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "LIxdHdcQr2GvcZ5W",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=** Select Top Articles **\nFrom {{ $json.articles }}, choose the 15 most relevant articles related to AI technology advancements,\ntools, research, and applications.\n** Summarize Clearly **\nOutout MAX 3500 characters,\nWrite in clear, professional, and readable language,\nsummarizing the main point of each article in 1-2 short sentences.\n** Include Links **\nAfter each summary, add the article's URL for readers to explore more.\n** Add the Date **\nBegin the summary with today’s date:\n{{ $now.format('yyyy/MM/dd') }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=** Output Format **\nOnly return the summary in plain text – no explanations or additional formatting.\nKeep the response up to 2000 characters\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        832,
+        0
+      ],
+      "id": "c1960d65-e915-439b-b297-2ca445587a7d",
+      "name": "News Summarizer"
+    },
+    {
+      "parameters": {
+        "chatId": "7582685911",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "cb634878-76f4-4650-b2cb-dac3e4c435b5",
+      "name": "Send a text message",
+      "webhookId": "8932db0c-e9e0-4f24-853c-4aa4fe16f970",
+      "credentials": {
+        "telegramApi": {
+          "id": "1lEQISJR3mMraKtf",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "burakabs6262@gmail.com",
+        "subject": "Hot N8N News",
+        "emailType": "text",
+        "message": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        144
+      ],
+      "id": "652a0308-3b70-42ff-a378-0f008e409b34",
+      "name": "Send a message1",
+      "webhookId": "c2b387a0-0bfd-4197-a556-77b08d5faf1e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PbPIfh8yx3Mhezjz",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Get News\n",
+        "height": 480,
+        "width": 800,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -32,
+        -192
+      ],
+      "typeVersion": 1,
+      "id": "b5515f94-f92d-4bd8-8caf-bcb1e9f13810",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Summarize\n",
+        "height": 480,
+        "width": 304,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        784,
+        -192
+      ],
+      "typeVersion": 1,
+      "id": "24920052-8e9a-4dca-a0ee-814fb06b5d9c",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Share\n",
+        "height": 480,
+        "width": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1104,
+        -192
+      ],
+      "typeVersion": 1,
+      "id": "3eff170e-4d29-4929-8caf-e1216cbe68c7",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 12
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9bc307a5-4ebc-4986-be03-9f4054fefcf1",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "content": "## AutoNewsBroadcaster11\nThis n8n workflow runs on a schedule, fetches news from GNews and NewsAPI, extracts articles, and merges them. Then it uses OpenAI to summarize the combined news. Finally, the summary is automatically shared to Slack, Telegram, and Gmail, delivering regular multi-channel news updates.",
+        "height": 144,
+        "width": 704,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        336,
+        -352
+      ],
+      "id": "a36c8f65-be91-41e2-965c-47b18bf16516",
+      "name": "Sticky Note3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "GNews Get": {
+      "main": [
+        [
+          {
+            "node": "Articles GNews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NewsAPI Get": {
+      "main": [
+        [
+          {
+            "node": "Articles NewsAPI ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Articles NewsAPI ": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Articles GNews": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "News Summarizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "News Summarizer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "News Summarizer": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "GNews Get",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "NewsAPI Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1
+  },
+  "versionId": "2d416b2d-786e-4214-9d99-6d539b7a86f3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4a2952d750233c02800975f682ffd82d00294fb62c8e98c152bd79f86550ccf2"
+  },
+  "id": "7OiaFgCs2tyfRTum",
+  "tags": []
+}
